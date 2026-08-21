@@ -1,0 +1,103 @@
+name: Release Linux Packages
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-release:
+    name: Build Linux Native Packages (AppImage, RPM, Deb, Tarball)
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: app/src-tauri -> target
+
+      - name: Install Linux Build Dependencies & Packaging Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-3-dev \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            libsecret-1-dev \
+            libdbus-1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libssl-dev \
+            rpm \
+            squashfs-tools
+
+      - name: Build Frontend Production Bundle
+        working-directory: app/frontend
+        run: |
+          npm ci || npm install
+          npm run build
+
+      - name: Build Rust Backend Release Binary
+        run: cargo build --release --manifest-path app/src-tauri/Cargo.toml
+
+      - name: Run Build Package Script
+        run: |
+          chmod +x scripts/build_package.sh
+          ./scripts/build_package.sh
+
+      - name: Generate Package Checksums
+        run: |
+          mkdir -p release_artifacts
+          cp dist/*.tar.gz release_artifacts/ 2>/dev/null || true
+          
+          cd release_artifacts
+          sha256sum * > SHA256SUMS.txt || true
+          cat SHA256SUMS.txt
+
+      - name: Create GitHub Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            release_artifacts/*
+            dist/*.tar.gz
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          name: DeepSeek Harness Linux ${{ github.ref_name }}
+          body: |
+            ## DeepSeek Harness Linux — ${{ github.ref_name }} Release
+            
+            Official native Linux desktop distribution for DeepSeek Harness.
+            
+            ### Included Packages & Binaries:
+            - **Standalone Tarball**: `deepseek-harness-linux-${{ github.ref_name }}-linux-x86_64.tar.gz`
+            - **AppImage**: Portable universal Linux desktop binary
+            - **RPM Package**: Fedora / RHEL / openSUSE native installer
+            - **Debian Package**: Ubuntu / Debian / Pop!_OS native installer
+            
+            ### Checksums (SHA256):
+            Verified release integrity checksums are listed in `SHA256SUMS.txt`.
+            
+            ### Quick Install (Tarball):
+            ```bash
+            tar -xzf deepseek-harness-linux-*.tar.gz
+            cd deepseek-harness-linux-*/
+            ./deepseek-harness-linux
+            ```

@@ -1,0 +1,73 @@
+# DeepSeek Harness Linux - Native Desktop App
+# Git Ignore Configuration
+
+# Rust & Cargo Build Artifacts
+target/
+app/src-tauri/target/
+Cargo.lock
+**/*.rs.bk
+*.pdb
+
+# Node.js & Frontend Artifacts
+node_modules/
+app/frontend/node_modules/
+app/frontend/dist/
+dist/
+dist-packages/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-debug.log*
+
+# Tauri & Desktop Bundle Output
+/src-tauri
+app/src-tauri/target/
+app/src-tauri/gen/
+*.appimage
+*.deb
+*.rpm
+*.tar.gz
+*.zip
+
+# Local DSH Runtime & Testing Workspaces (Local Sandbox Data)
+upstream/
+.dsh/
+.dsh_runtime/
+sandbox_workspaces/
+*.staging
+*.tar.gz.snapshot
+
+# Performance & Benchmark Documents & Profiling Logs
+*.perf.json
+*.benchmark.json
+docs/perf/
+perf/
+performance/
+perf-*.md
+benchmarks/
+*.profdata
+*.profraw
+*.heap
+
+# Environment & Secrets (Never commit credentials)
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.secret
+dsh_vault.enc
+
+# IDE & Editor Settings
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+.system_generated/
+
+# Antigravity IDE Internal Brain
+.gemini/
